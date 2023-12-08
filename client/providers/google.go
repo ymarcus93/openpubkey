@@ -14,7 +14,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/openpubkey/openpubkey/client"
-	"github.com/openpubkey/openpubkey/util"
 	"github.com/sirupsen/logrus"
 	oidcclient "github.com/zitadel/oidc/v2/pkg/client"
 	"github.com/zitadel/oidc/v2/pkg/client/rp"
@@ -87,8 +86,8 @@ func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard
 
 	logrus.Infof("listening on http://%s/", lis)
 	logrus.Info("press ctrl+c to stop")
-	earl := fmt.Sprintf("http://localhost:%s/login", g.RedirURIPort)
-	util.OpenUrl(earl)
+	// earl := fmt.Sprintf("http://localhost:%s/login", g.RedirURIPort)
+	// util.OpenUrl(earl)
 
 	go func() {
 		err := g.server.ListenAndServe()
