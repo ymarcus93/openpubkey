@@ -64,7 +64,8 @@ func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard
 	ch := make(chan []byte)
 	chErr := make(chan error)
 
-	http.Handle("/login", rp.AuthURLHandler(state, provider, rp.WithURLParam("nonce", cicHash)))
+	mux := http.NewServeMux()
+	mux.Handle("/login", rp.AuthURLHandler(state, provider, rp.WithURLParam("nonce", cicHash)))
 
 	marshalToken := func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string, rp rp.RelyingParty) {
 		if err != nil {
@@ -77,11 +78,12 @@ func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard
 		w.Write([]byte("You may now close this window"))
 	}
 
-	http.Handle(g.CallbackPath, rp.CodeExchangeHandler(marshalToken, provider))
+	mux.Handle(g.CallbackPath, rp.CodeExchangeHandler(marshalToken, provider))
 
 	lis := fmt.Sprintf("localhost:%s", g.RedirURIPort)
 	g.server = &http.Server{
-		Addr: lis,
+		Addr:    lis,
+		Handler: mux,
 	}
 
 	logrus.Infof("listening on http://%s/", lis)
