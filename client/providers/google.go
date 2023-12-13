@@ -160,6 +160,9 @@ func (g *GoogleOp) VerifyNonGQSig(ctx context.Context, idt []byte, expectedNonce
 	options := []rp.Option{
 		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5*time.Second), rp.WithNonce(func(ctx context.Context) string { return expectedNonce })),
 	}
+	if g.HttpClient != nil {
+		options = append(options, rp.WithHTTPClient(g.HttpClient))
+	}
 
 	googleRP, err := rp.NewRelyingPartyOIDC(
 		g.Issuer, g.ClientID, g.ClientSecret, g.RedirectURI, g.Scopes,
