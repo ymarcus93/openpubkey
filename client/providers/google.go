@@ -34,6 +34,7 @@ type GoogleOp struct {
 	RedirURIPort string
 	CallbackPath string
 	RedirectURI  string
+	HttpClient   *http.Client
 	server       *http.Server
 }
 
@@ -49,6 +50,9 @@ func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard
 				func(ctx context.Context) string { return cicHash })),
 	}
 	options = append(options, rp.WithPKCE(cookieHandler))
+	if g.HttpClient != nil {
+		options = append(options, rp.WithHTTPClient(g.HttpClient))
+	}
 
 	provider, err := rp.NewRelyingPartyOIDC(
 		g.Issuer, g.ClientID, g.ClientSecret, g.RedirectURI,
