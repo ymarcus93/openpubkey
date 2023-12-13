@@ -15,11 +15,11 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/openpubkey/openpubkey/client"
 	"github.com/sirupsen/logrus"
-	oidcclient "github.com/zitadel/oidc/v2/pkg/client"
-	"github.com/zitadel/oidc/v2/pkg/client/rp"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
+	oidcclient "github.com/zitadel/oidc/v3/pkg/client"
+	"github.com/zitadel/oidc/v3/pkg/client/rp"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 
-	httphelper "github.com/zitadel/oidc/v2/pkg/http"
+	httphelper "github.com/zitadel/oidc/v3/pkg/http"
 )
 
 var (
@@ -41,8 +41,7 @@ type GoogleOp struct {
 var _ client.OpenIdProvider = (*GoogleOp)(nil)
 
 func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard.LockedBuffer, error) {
-	cookieHandler :=
-		httphelper.NewCookieHandler(key, key, httphelper.WithUnsecure())
+	cookieHandler := httphelper.NewCookieHandler(key, key, httphelper.WithUnsecure())
 	options := []rp.Option{
 		rp.WithCookieHandler(cookieHandler),
 		rp.WithVerifierOpts(
@@ -54,7 +53,7 @@ func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard
 		options = append(options, rp.WithHTTPClient(g.HttpClient))
 	}
 
-	provider, err := rp.NewRelyingPartyOIDC(
+	provider, err := rp.NewRelyingPartyOIDC(ctx,
 		g.Issuer, g.ClientID, g.ClientSecret, g.RedirectURI,
 		g.Scopes, options...)
 	if err != nil {
@@ -132,7 +131,7 @@ func (g *GoogleOp) PublicKey(ctx context.Context, idt []byte) (crypto.PublicKey,
 	}
 	kid := j.Signatures()[0].ProtectedHeaders().KeyID()
 
-	discConf, err := oidcclient.Discover(g.Issuer, http.DefaultClient)
+	discConf, err := oidcclient.Discover(ctx, g.Issuer, http.DefaultClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call OIDC discovery endpoint: %w", err)
 	}
@@ -164,7 +163,7 @@ func (g *GoogleOp) VerifyNonGQSig(ctx context.Context, idt []byte, expectedNonce
 		options = append(options, rp.WithHTTPClient(g.HttpClient))
 	}
 
-	googleRP, err := rp.NewRelyingPartyOIDC(
+	googleRP, err := rp.NewRelyingPartyOIDC(ctx,
 		g.Issuer, g.ClientID, g.ClientSecret, g.RedirectURI, g.Scopes,
 		options...)
 

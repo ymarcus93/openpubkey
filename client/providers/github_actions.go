@@ -16,7 +16,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/openpubkey/openpubkey/client"
-	oidcclient "github.com/zitadel/oidc/v2/pkg/client"
+	oidcclient "github.com/zitadel/oidc/v3/pkg/client"
 )
 
 const githubIssuer = "https://token.actions.githubusercontent.com"
@@ -96,7 +96,7 @@ func (g *GithubOp) PublicKey(ctx context.Context, idt []byte) (crypto.PublicKey,
 		return nil, fmt.Errorf("expected RS256 alg claim, got %s", alg)
 	}
 
-	discConf, err := oidcclient.Discover(githubIssuer, http.DefaultClient)
+	discConf, err := oidcclient.Discover(ctx, githubIssuer, http.DefaultClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call OIDC discovery endpoint: %w", err)
 	}
