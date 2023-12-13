@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -70,18 +71,37 @@ func (g *GoogleOp) RequestTokens(ctx context.Context, cicHash string) (*memguard
 	mux := http.NewServeMux()
 	mux.Handle("/login", rp.AuthURLHandler(state, provider, rp.WithURLParam("nonce", cicHash)))
 
-	marshalToken := func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string, rp rp.RelyingParty) {
+	// marshalToken := func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string, rp rp.RelyingParty) {
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 		chErr <- err
+	// 		return
+	// 	}
+
+	// 	ch <- []byte(tokens.IDToken)
+	// 	w.Write([]byte("You may now close this window"))
+	// }
+
+	marshalUserinfo := func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string, rp rp.RelyingParty, info *oidc.UserInfo) {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			chErr <- err
 			return
 		}
 
-		ch <- []byte(tokens.IDToken)
+		data, err := json.Marshal(info)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			chErr <- err
+			return
+		}
+
+		ch <- []byte(data)
 		w.Write([]byte("You may now close this window"))
 	}
 
-	mux.Handle(g.CallbackPath, rp.CodeExchangeHandler(marshalToken, provider))
+	// mux.Handle(g.CallbackPath, rp.CodeExchangeHandler(marshalToken, provider))
+	mux.Handle(g.CallbackPath, rp.CodeExchangeHandler(rp.UserinfoCallback(marshalUserinfo), provider))
 
 	lis := fmt.Sprintf("localhost:%s", g.RedirURIPort)
 	g.server = &http.Server{
